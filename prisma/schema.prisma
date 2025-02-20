@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") 
+}
+
+model User {
+  id       String   @id @default(cuid())  
+  username String   @unique
+  email    String   @unique
+  password String
+  banned   Boolean  @default(false)
+  role     String   @default("guest")  
+  croom    Room[] 
+  messages Message[] 
+  roomId   String?  
+  room     Room?    @relation("UserRoom", fields: [roomId], references: [id])
+}
+
+model Message {
+  id        String   @id @default(cuid())  
+  content   String
+  createdAt DateTime @default(now())
+
+  senderId String  
+  sender   User @relation(fields: [senderId], references: [id])
+  
+  roomId   String  
+  room     Room @relation(fields: [roomId], references: [id])
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String   
+  startsAt  DateTime @default(now())   
+  expiresAt DateTime
+  active    Boolean  @default(false) 
+
+  messages  Message[]
+  creator   User     @relation(fields: [userId], references: [id])
+
+  location  Unsupported("geometry(Point, 4326)")
+  users     User[]   @relation("UserRoom")
+}
