@@ -20,10 +20,9 @@ app.use(express.urlencoded({ extended: true }));
 
 const userRoutes = require('./src/routes/userRoutes');
 const roomRoutes = require('./src/routes/roomRoutes');
-const messageRoutes = require('./src/routes/messageRoutes');
+
 app.use('/users', userRoutes);
 app.use('/rooms', roomRoutes);
-app.use('/messages', messageRoutes);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

@@ -2,8 +2,11 @@ const db = require('../queries/messageQueries');
 
 module.exports.createMessage = async (req, res) => {
   try {
+    console.log('creating message...');
     const senderId = req.user.id;
-    const messageData = { ...req.body, senderId };
+    const { roomId } = req.params;
+    const { content } = req.body;
+    const messageData = { content, roomId, senderId };
     const newMessage = await db.createMessage(messageData);
     res.status(201).json(newMessage);
   } catch (error) {
@@ -13,7 +16,7 @@ module.exports.createMessage = async (req, res) => {
 
 module.exports.getMessageById = async (req, res) => {
   try {
-    const message = await db.getMessageById(req.params.id);
+    const message = await db.getMessageById(req.params.messageId);
     if (!message) return res.status(404).json({ error: 'Message not found' });
     res.json(message);
   } catch (error) {
@@ -32,7 +35,7 @@ module.exports.getMessagesByRoom = async (req, res) => {
 
 module.exports.deleteMessage = async (req, res) => {
   try {
-    await db.deleteMessage(req.params.id);
+    await db.deleteMessage(req.params.messageId);
     res.json({ message: 'Message deleted successfully' });
   } catch (error) {
     res.status(400).json({ error: error.message });

@@ -28,14 +28,15 @@ module.exports.createRoom = async function ({
         gen_random_uuid(),
         ${name},
         ${userId},
-        ${startsAt}::timestamp,
-        ${expiresAt}::timestamp,
+        ${startsAt}::timestamptz,
+        ${expiresAt}::timestamptz,
         ${active},
-        ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)
+        ST_SetSRID(ST_MakePoint(${longitude}::DOUBLE PRECISION, ${latitude}::DOUBLE PRECISION), 4326)
       )
       RETURNING id, name, "userId", "startsAt", "expiresAt", active, ST_AsText(location) AS location;
     `;
   } catch (error) {
+    console.log(error);
     throw new Error(`Failed to create room: ${error.message}`);
   }
 };
@@ -46,6 +47,16 @@ module.exports.getRoomById = async function (roomId) {
   try {
     return await prisma.room.findUnique({
       where: { id: roomId },
+      include: {
+        messages: {
+          include: {
+            sender: {
+              select: { username: true },
+            },
+          },
+        },
+        users: true,
+      },
     });
   } catch (error) {
     throw new Error(`Failed to retrieve room: ${error.message}`);
@@ -91,7 +102,6 @@ module.exports.getNearbyRooms = async function ({
   longitude,
   radiusKm,
 }) {
-  console.log(latitude, longitude, radiusKm);
   if (latitude == null || longitude == null || !radiusKm) {
     throw new Error('Latitude, longitude, and radius are required');
   }
@@ -105,8 +115,8 @@ module.exports.getNearbyRooms = async function ({
       FROM "Room"
       WHERE active = true AND ST_DWithin(
         location,
-        ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography,
-        ${radiusKm} * 1000
+        ST_SetSRID(ST_MakePoint(${longitude}::DOUBLE PRECISION, ${latitude}::DOUBLE PRECISION), 4326)::geography,
+        ${radiusKm}::DOUBLE PRECISION * 1000
       );
     `;
   } catch (error) {
@@ -118,7 +128,6 @@ module.exports.addUserToRoom = async function (userId, roomId) {
   if (!userId || !roomId) throw new Error('User ID and Room ID are required');
 
   try {
-    // Ensure the user is not already in another room
     return await prisma.user.update({
       where: { id: userId },
       data: { roomId },
@@ -158,7 +167,7 @@ module.exports.updateExpiredRooms = async function () {
   try {
     await prisma.room.updateMany({
       where: {
-        expiresAt: { lt: new Date() },
+        expiresAt: { lt: new Date().toISOString() },
         active: true,
       },
       data: { active: false },

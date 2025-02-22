@@ -1,12 +1,13 @@
 const express = require('express');
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 const messageController = require('../controllers/messageController');
 const passport = require('../config/passport-jwt');
 const passportJWT = passport.authenticate('jwt', { session: false });
 
 router.post('/', passportJWT, messageController.createMessage);
-router.get('/:id', passportJWT, messageController.getMessageById);
-router.get('/room/:roomId', passportJWT, messageController.getMessagesByRoom);
-router.delete('/:id', passportJWT, messageController.deleteMessage);
+router.get('/', passportJWT, messageController.getMessagesByRoom);
+
+router.get('/:messageId', passportJWT, messageController.getMessageById);
+router.delete('/:messageId', passportJWT, messageController.deleteMessage);
 
 module.exports = router;

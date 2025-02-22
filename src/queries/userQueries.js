@@ -47,10 +47,14 @@ module.exports.getUserByName = async function (username) {
   }
 };
 
-module.exports.updateUser = async function (
+module.exports.updateUser = async function ({
   userId,
-  { username, email, password, role, banned }
-) {
+  username,
+  email,
+  password,
+  role,
+  banned,
+}) {
   if (!userId) throw new Error('User ID is required');
 
   try {

@@ -5,10 +5,15 @@ module.exports.createMessage = async function ({ content, senderId, roomId }) {
   if (!content || !senderId || !roomId) {
     throw new Error('Content, sender ID, and room ID are required');
   }
-
+  console.log('creating message...');
   try {
     return await prisma.message.create({
       data: { content, senderId, roomId },
+      include: {
+        sender: {
+          select: { username: true },
+        },
+      },
     });
   } catch (error) {
     throw new Error(`Failed to create message: ${error.message}`);
