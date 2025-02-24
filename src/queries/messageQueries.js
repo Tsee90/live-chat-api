@@ -1,14 +1,19 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-module.exports.createMessage = async function ({ content, senderId, roomId }) {
+module.exports.createMessage = async function ({
+  content,
+  senderId,
+  roomId,
+  createdAt = new Date().toISOString(),
+}) {
+  console.log(content, senderId, roomId, createdAt);
   if (!content || !senderId || !roomId) {
     throw new Error('Content, sender ID, and room ID are required');
   }
-  console.log('creating message...');
   try {
     return await prisma.message.create({
-      data: { content, senderId, roomId },
+      data: { content, senderId, roomId, createdAt },
       include: {
         sender: {
           select: { username: true },

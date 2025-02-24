@@ -31,7 +31,7 @@ module.exports = (io, socket) => {
     }
   });
 
-  socket.on('send_message', async ({ message }) => {
+  socket.on('send_message', async ({ message, createdAt }) => {
     const roomId = socket.roomId;
     const senderId = userId;
     const content = message;
@@ -40,9 +40,11 @@ module.exports = (io, socket) => {
         roomId,
         senderId,
         content,
+        createdAt,
       });
-      console.log(newMessage);
-      io.to(roomId).emit('receive_message', newMessage);
+      const updatedRoom = await roomDb.getRoomById(roomId);
+      const messages = updatedRoom.messages;
+      io.to(roomId).emit('receive_message', { messages });
       console.log(`Message from ${senderId} in ${roomId}: ${message}`);
     } catch (error) {
       socket.emit('error', 'Failed to send message');

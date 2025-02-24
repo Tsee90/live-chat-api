@@ -4,7 +4,7 @@ const userController = require('../controllers/userController');
 const passport = require('../config/passport-jwt');
 const passportJWT = passport.authenticate('jwt', { session: false });
 
-router.post('/', userController.createUser);
+router.post('/signup', userController.createUser);
 router.post('/login', userController.login);
 
 router.get('/:id', passportJWT, userController.getUserById);

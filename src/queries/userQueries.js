@@ -5,7 +5,7 @@ module.exports.createUser = async function ({
   username,
   email,
   password,
-  role = 'guest',
+  role = 'user',
   banned = false,
 }) {
   if (!username || !email || !password) {

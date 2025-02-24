@@ -2,7 +2,6 @@ const db = require('../queries/messageQueries');
 
 module.exports.createMessage = async (req, res) => {
   try {
-    console.log('creating message...');
     const senderId = req.user.id;
     const { roomId } = req.params;
     const { content } = req.body;

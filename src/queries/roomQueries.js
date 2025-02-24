@@ -49,6 +49,9 @@ module.exports.getRoomById = async function (roomId) {
       where: { id: roomId },
       include: {
         messages: {
+          orderBy: {
+            createdAt: 'asc',
+          },
           include: {
             sender: {
               select: { username: true },
