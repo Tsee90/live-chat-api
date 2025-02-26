@@ -13,11 +13,13 @@ model User {
   email    String   @unique
   password String
   banned   Boolean  @default(false)
-  role     String   @default("guest")  
+  role     String   @default("user")  
   croom    Room[] 
   messages Message[] 
   roomId   String?  
   room     Room?    @relation("UserRoom", fields: [roomId], references: [id])
+  emailVerified    Boolean  @default(false)
+  verificationCode String? 
 }
 
 model Message {

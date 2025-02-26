@@ -7,6 +7,8 @@ module.exports.createUser = async function ({
   password,
   role = 'user',
   banned = false,
+  emailVerified = false,
+  verificationCode = null,
 }) {
   if (!username || !email || !password) {
     throw new Error('Username, email, and password are required');
@@ -14,7 +16,15 @@ module.exports.createUser = async function ({
 
   try {
     return await prisma.user.create({
-      data: { username, email, password, role, banned },
+      data: {
+        username,
+        email,
+        password,
+        role,
+        banned,
+        emailVerified,
+        verificationCode,
+      },
     });
   } catch (error) {
     throw new Error(`Failed to create user: ${error.message}`);
@@ -39,6 +49,19 @@ module.exports.getUserByName = async function (username) {
   try {
     return await prisma.user.findUnique({
       where: { username },
+      include: { croom: true, messages: true },
+    });
+  } catch (error) {
+    console.log('throwing error', error);
+    throw new Error(`Failed to find user ${error.message}`);
+  }
+};
+
+module.exports.getUserByEmail = async function (email) {
+  if (!email) throw new Error('Username is required');
+  try {
+    return await prisma.user.findUnique({
+      where: { email },
       include: { croom: true, messages: true },
     });
   } catch (error) {
@@ -84,5 +107,20 @@ module.exports.getAllUsers = async function () {
     return await prisma.user.findMany();
   } catch (error) {
     throw new Error(`Failed to retrieve users: ${error.message}`);
+  }
+};
+
+module.exports.verifyUser = async function (userId) {
+  if (!userId) throw new Error('User ID is required');
+  try {
+    return await prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerified: true,
+        verificationCode: null,
+      },
+    });
+  } catch (error) {
+    throw new Error(`Failed to verify user: ${error.message}`);
   }
 };
