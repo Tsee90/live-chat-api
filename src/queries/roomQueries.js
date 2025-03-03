@@ -142,15 +142,17 @@ module.exports.getNearbyRoomsSortUserCount = async function ({
              ST_AsText(r.location) AS location, 
              ST_X(r.location) as longitude, 
              ST_Y(r.location) as latitude,
-             COUNT(u."id") AS user_count
+             COUNT(u."id") AS user_count,
+             creator.username AS creator_username
       FROM "Room" r
       LEFT JOIN "User" u ON r.id = u."roomId"
+      LEFT JOIN "User" creator ON r."userId" = creator.id
       WHERE r.active = true AND ST_DWithin(
         r.location,
         ST_SetSRID(ST_MakePoint(${longitude}::DOUBLE PRECISION, ${latitude}::DOUBLE PRECISION), 4326)::geography,
         ${radiusKm}::DOUBLE PRECISION * 1000
       )
-      GROUP BY r.id
+      GROUP BY r.id, creator.username
       ORDER BY user_count DESC; 
     `;
     return rooms.map((room) => ({
@@ -178,16 +180,18 @@ module.exports.getNearbyRoomsSortNewest = async function ({
              ST_AsText(r.location) AS location, 
              ST_X(r.location) AS longitude, 
              ST_Y(r.location) AS latitude,
-             COUNT(u."id") AS user_count
+             COUNT(u."id") AS user_count,
+             creator.username AS creator_username
       FROM "Room" r
       LEFT JOIN "User" u ON r.id = u."roomId"
+      LEFT JOIN "User" creator ON r."userId" = creator.id
       WHERE r.active = true 
         AND ST_DWithin(
           r.location,
           ST_SetSRID(ST_MakePoint(${longitude}::DOUBLE PRECISION, ${latitude}::DOUBLE PRECISION), 4326)::geography,
           ${radiusKm}::DOUBLE PRECISION * 1000
         )
-      GROUP BY r.id
+      GROUP BY r.id, creator.username
       ORDER BY r."startsAt" DESC;  -- Sort by newest rooms
     `;
 
@@ -209,6 +213,9 @@ module.exports.getAllRoomsSortCount = async function () {
         _count: {
           select: { users: true },
         },
+        creator: {
+          select: { username: true },
+        },
       },
       orderBy: {
         users: {
@@ -220,6 +227,7 @@ module.exports.getAllRoomsSortCount = async function () {
     return rooms.map((room) => ({
       ...room,
       user_count: room._count.users,
+      creator_username: room.creator.username,
     }));
   } catch (error) {
     throw new Error(`Failed to find nearby rooms: ${error.message}`);
@@ -234,12 +242,16 @@ module.exports.getAllRoomsSortNew = async function () {
         _count: {
           select: { users: true },
         },
+        creator: {
+          select: { username: true },
+        },
       },
       orderBy: { startsAt: 'desc' },
     });
     return rooms.map((room) => ({
       ...room,
       user_count: room._count.users,
+      creator_username: room.creator.username,
     }));
   } catch (error) {
     throw new Error(`Failed to find nearby rooms: ${error.message}`);
