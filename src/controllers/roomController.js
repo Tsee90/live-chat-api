@@ -51,11 +51,34 @@ module.exports.deleteRoom = async (req, res) => {
   }
 };
 
-module.exports.getNearbyRooms = async (req, res) => {
+module.exports.getRooms = async (req, res) => {
   try {
-    const rooms = await db.getNearbyRooms(req.query);
+    const { sort, radiusKm } = req.query;
+    let rooms = [];
+
+    if (sort === 'userCount') {
+      if (radiusKm === 'all') {
+        rooms = await db.getAllRoomsSortCount();
+      } else {
+        rooms = await db.getNearbyRoomsSortUserCount(req.query);
+        const formattedRooms = rooms.map((room) => ({
+          ...room,
+          user_count: Number(room.user_count),
+        }));
+        rooms = formattedRooms;
+      }
+    }
+
+    if (sort === 'newest') {
+      if (radiusKm === 'all') {
+        rooms = await db.getAllRoomsSortNew();
+      } else {
+        rooms = await db.getNearbyRoomsSortNewest(req.query);
+      }
+    }
     res.json(rooms);
   } catch (error) {
+    console.log(error);
     res.status(400).json({ error: error.message });
   }
 };

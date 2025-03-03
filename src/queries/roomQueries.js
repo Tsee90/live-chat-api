@@ -127,6 +127,90 @@ module.exports.getNearbyRooms = async function ({
   }
 };
 
+module.exports.getNearbyRoomsSortUserCount = async function ({
+  latitude,
+  longitude,
+  radiusKm,
+}) {
+  if (latitude == null || longitude == null || !radiusKm) {
+    throw new Error('Latitude, longitude, and radius are required');
+  }
+
+  try {
+    return await prisma.$queryRaw`
+      SELECT r.id, r.name, r."userId", r."startsAt", r."expiresAt", r.active, 
+             ST_AsText(r.location) AS location, 
+             ST_X(r.location) as longitude, 
+             ST_Y(r.location) as latitude,
+             COUNT(u."id") AS user_count
+      FROM "Room" r
+      LEFT JOIN "User" u ON r.id = u."roomId"
+      WHERE r.active = true AND ST_DWithin(
+        r.location,
+        ST_SetSRID(ST_MakePoint(${longitude}::DOUBLE PRECISION, ${latitude}::DOUBLE PRECISION), 4326)::geography,
+        ${radiusKm}::DOUBLE PRECISION * 1000
+      )
+      GROUP BY r.id
+      ORDER BY user_count DESC; 
+    `;
+  } catch (error) {
+    console.error(error);
+    throw new Error(`Failed to find nearby rooms: ${error.message}`);
+  }
+};
+
+module.exports.getNearbyRoomsSortNewest = async function ({
+  latitude,
+  longitude,
+  radiusKm,
+}) {
+  if (latitude == null || longitude == null || !radiusKm) {
+    throw new Error('Latitude, longitude, and radius are required');
+  }
+
+  try {
+    return await prisma.$queryRaw`
+      SELECT id, name, "userId", "startsAt", "expiresAt", active, 
+             ST_AsText(location) AS location, 
+             ST_X(location) as longitude, 
+             ST_Y(location) as latitude
+      FROM "Room"
+      WHERE active = true AND ST_DWithin(
+        location,
+        ST_SetSRID(ST_MakePoint(${longitude}::DOUBLE PRECISION, ${latitude}::DOUBLE PRECISION), 4326)::geography,
+        ${radiusKm}::DOUBLE PRECISION * 1000
+      )
+      ORDER BY "startsAt" DESC; 
+    `;
+  } catch (error) {
+    throw new Error(`Failed to find nearby rooms: ${error.message}`);
+  }
+};
+
+module.exports.getAllRoomsSortCount = async function () {
+  try {
+    return await prisma.room.findMany({
+      where: { active: true },
+      include: { users: true },
+      orderBy: { users: { _count: 'desc' } },
+    });
+  } catch (error) {
+    throw new Error(`Failed to find nearby rooms: ${error.message}`);
+  }
+};
+
+module.exports.getAllRoomsSortNew = async function () {
+  try {
+    return await prisma.room.findMany({
+      where: { active: true },
+      include: { users: true },
+      orderBy: { startsAt: 'desc' },
+    });
+  } catch (error) {
+    throw new Error(`Failed to find nearby rooms: ${error.message}`);
+  }
+};
+
 module.exports.addUserToRoom = async function (userId, roomId) {
   if (!userId || !roomId) throw new Error('User ID and Room ID are required');
 

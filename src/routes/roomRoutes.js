@@ -9,7 +9,7 @@ router.post('/', passportJWT, roomController.createRoom);
 router.get('/:roomId', passportJWT, roomController.getRoomById);
 router.put('/:roomId', passportJWT, roomController.updateRoom);
 router.delete('/:roomId', passportJWT, roomController.deleteRoom);
-router.get('/', passportJWT, roomController.getNearbyRooms);
+router.get('/', passportJWT, roomController.getRooms);
 router.post('/:roomId/join', passportJWT, roomController.joinRoom);
 router.post('/:roomId/leave', passportJWT, roomController.leaveRoom);
 
