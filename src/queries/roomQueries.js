@@ -28,8 +28,8 @@ module.exports.createRoom = async function ({
         gen_random_uuid(),
         ${name},
         ${userId},
-        ${startsAt}::timestamptz,
-        ${expiresAt}::timestamptz,
+        ${startsAt}::timestamp,
+        ${expiresAt}::timestamp,
         ${active},
         ST_SetSRID(ST_MakePoint(${longitude}::DOUBLE PRECISION, ${latitude}::DOUBLE PRECISION), 4326)
       )
@@ -308,5 +308,19 @@ module.exports.updateExpiredRooms = async function () {
     });
   } catch (error) {
     throw new Error(`Failed to update expired rooms ${error.message}`);
+  }
+};
+
+module.exports.updateEmptyRooms = async function () {
+  try {
+    await prisma.room.updateMany({
+      where: {
+        users: { none: {} },
+        active: true,
+      },
+      data: { active: false },
+    });
+  } catch (error) {
+    throw new Error(`Failed to deactivate empty rooms: ${error.message}`);
   }
 };
