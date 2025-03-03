@@ -137,7 +137,7 @@ module.exports.getNearbyRoomsSortUserCount = async function ({
   }
 
   try {
-    return await prisma.$queryRaw`
+    const rooms = await prisma.$queryRaw`
       SELECT r.id, r.name, r."userId", r."startsAt", r."expiresAt", r.active, 
              ST_AsText(r.location) AS location, 
              ST_X(r.location) as longitude, 
@@ -153,6 +153,10 @@ module.exports.getNearbyRoomsSortUserCount = async function ({
       GROUP BY r.id
       ORDER BY user_count DESC; 
     `;
+    return rooms.map((room) => ({
+      ...room,
+      user_count: Number(room.user_count),
+    }));
   } catch (error) {
     console.error(error);
     throw new Error(`Failed to find nearby rooms: ${error.message}`);
@@ -169,31 +173,54 @@ module.exports.getNearbyRoomsSortNewest = async function ({
   }
 
   try {
-    return await prisma.$queryRaw`
-      SELECT id, name, "userId", "startsAt", "expiresAt", active, 
-             ST_AsText(location) AS location, 
-             ST_X(location) as longitude, 
-             ST_Y(location) as latitude
-      FROM "Room"
-      WHERE active = true AND ST_DWithin(
-        location,
-        ST_SetSRID(ST_MakePoint(${longitude}::DOUBLE PRECISION, ${latitude}::DOUBLE PRECISION), 4326)::geography,
-        ${radiusKm}::DOUBLE PRECISION * 1000
-      )
-      ORDER BY "startsAt" DESC; 
+    const rooms = await prisma.$queryRaw`
+      SELECT r.id, r.name, r."userId", r."startsAt", r."expiresAt", r.active, 
+             ST_AsText(r.location) AS location, 
+             ST_X(r.location) AS longitude, 
+             ST_Y(r.location) AS latitude,
+             COUNT(u."id") AS user_count
+      FROM "Room" r
+      LEFT JOIN "User" u ON r.id = u."roomId"
+      WHERE r.active = true 
+        AND ST_DWithin(
+          r.location,
+          ST_SetSRID(ST_MakePoint(${longitude}::DOUBLE PRECISION, ${latitude}::DOUBLE PRECISION), 4326)::geography,
+          ${radiusKm}::DOUBLE PRECISION * 1000
+        )
+      GROUP BY r.id
+      ORDER BY r."startsAt" DESC;  -- Sort by newest rooms
     `;
+
+    return rooms.map((room) => ({
+      ...room,
+      user_count: Number(room.user_count), // Convert BigInt to Number
+    }));
   } catch (error) {
+    console.error(error);
     throw new Error(`Failed to find nearby rooms: ${error.message}`);
   }
 };
 
 module.exports.getAllRoomsSortCount = async function () {
   try {
-    return await prisma.room.findMany({
+    const rooms = await prisma.room.findMany({
       where: { active: true },
-      include: { users: true },
-      orderBy: { users: { _count: 'desc' } },
+      include: {
+        _count: {
+          select: { users: true },
+        },
+      },
+      orderBy: {
+        users: {
+          _count: 'desc',
+        },
+      },
     });
+
+    return rooms.map((room) => ({
+      ...room,
+      user_count: room._count.users,
+    }));
   } catch (error) {
     throw new Error(`Failed to find nearby rooms: ${error.message}`);
   }
@@ -201,11 +228,19 @@ module.exports.getAllRoomsSortCount = async function () {
 
 module.exports.getAllRoomsSortNew = async function () {
   try {
-    return await prisma.room.findMany({
+    const rooms = await prisma.room.findMany({
       where: { active: true },
-      include: { users: true },
+      include: {
+        _count: {
+          select: { users: true },
+        },
+      },
       orderBy: { startsAt: 'desc' },
     });
+    return rooms.map((room) => ({
+      ...room,
+      user_count: room._count.users,
+    }));
   } catch (error) {
     throw new Error(`Failed to find nearby rooms: ${error.message}`);
   }

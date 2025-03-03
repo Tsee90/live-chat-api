@@ -61,11 +61,6 @@ module.exports.getRooms = async (req, res) => {
         rooms = await db.getAllRoomsSortCount();
       } else {
         rooms = await db.getNearbyRoomsSortUserCount(req.query);
-        const formattedRooms = rooms.map((room) => ({
-          ...room,
-          user_count: Number(room.user_count),
-        }));
-        rooms = formattedRooms;
       }
     }
 
