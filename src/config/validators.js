@@ -6,8 +6,8 @@ const validateUser = [
     .trim()
     .notEmpty()
     .withMessage('Username is required')
-    .isLength({ min: 3 })
-    .withMessage('Username must be at least 3 characters')
+    .isLength({ min: 3, max: 15 })
+    .withMessage('Username must be between 3 and 15 characters')
     .custom(async (username) => {
       const existingUser = await db.getUserByName(username);
       if (existingUser) {
@@ -21,6 +21,8 @@ const validateUser = [
     .withMessage('Email is required')
     .isEmail()
     .withMessage('Invalid email format')
+    .isLength({ min: 6, max: 254 })
+    .withMessage('Email must be within 6 to 254 characters')
     .custom(async (email) => {
       const existingEmail = await db.getUserByEmail(email);
       if (existingEmail) {
@@ -31,8 +33,8 @@ const validateUser = [
   body('password')
     .notEmpty()
     .withMessage('Password is required')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters')
+    .isLength({ min: 8, max: 128 })
+    .withMessage('Password must be between 8 and 128 characters')
     .matches(/[A-Z]/)
     .withMessage('Must include one uppercase letter')
     .matches(/\d/)
@@ -50,5 +52,12 @@ const validateUser = [
       return true;
     }),
 ];
-
-module.exports = { validateUser };
+const validateMessage = [
+  body('content')
+    .trim()
+    .notEmpty()
+    .withMessage('Message content is required')
+    .isLength({ max: 2000 })
+    .withMessage('Message must not exceed 2000 characters'),
+];
+module.exports = { validateUser, validateMessage };

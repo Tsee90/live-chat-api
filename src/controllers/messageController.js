@@ -1,17 +1,27 @@
 const db = require('../queries/messageQueries');
+const { validateMessage } = require('../config/validators');
+const { validationResult } = require('express-validator');
 
-module.exports.createMessage = async (req, res) => {
-  try {
-    const senderId = req.user.id;
-    const { roomId } = req.params;
-    const { content } = req.body;
-    const messageData = { content, roomId, senderId };
-    const newMessage = await db.createMessage(messageData);
-    res.status(201).json(newMessage);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
+module.exports.createMessage = [
+  validateMessage,
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const senderId = req.user.id;
+      const { roomId } = req.params;
+      const { content } = req.body;
+      const messageData = { content, roomId, senderId };
+      const newMessage = await db.createMessage(messageData);
+      res.status(201).json(newMessage);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  },
+];
 
 module.exports.getMessageById = async (req, res) => {
   try {

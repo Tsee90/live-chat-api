@@ -35,6 +35,11 @@ module.exports = (io, socket) => {
     const roomId = socket.roomId;
     const senderId = userId;
     const content = message;
+
+    if (content.length > 2000) {
+      socket.emit('error', 'Message too long');
+      return;
+    }
     try {
       const newMessage = await db.createMessage({
         roomId,
