@@ -6,7 +6,6 @@ module.exports = (io, socket) => {
   const userId = socket.user.id;
   socket.on('join_room', async ({ roomId }) => {
     try {
-      console.log('joining room...', roomId);
       const room = await roomDb.getRoomById(roomId);
       if (!room) {
         socket.emit('error', 'Room not found');
@@ -23,7 +22,6 @@ module.exports = (io, socket) => {
       await roomDb.addUserToRoom(socket.user.id, roomId);
 
       socket.join(roomId);
-      console.log(`User ${username} (${socket.id}) joined room: ${roomId}`);
 
       io.to(roomId).emit('joined_room', { user: socket.user });
     } catch (error) {
@@ -50,7 +48,6 @@ module.exports = (io, socket) => {
       const updatedRoom = await roomDb.getRoomById(roomId);
       const messages = updatedRoom.messages;
       io.to(roomId).emit('receive_message', { messages });
-      console.log(`Message from ${senderId} in ${roomId}: ${message}`);
     } catch (error) {
       socket.emit('error', 'Failed to send message');
     }
@@ -62,7 +59,6 @@ module.exports = (io, socket) => {
       socket.leave(roomId);
       await roomDb.removeUserFromRoom(userId);
 
-      console.log(`User ${userId} (${socket.id}) left room: ${roomId}`);
       io.to(roomId).emit('user_left', { userId });
     } catch (error) {
       socket.emit('error', 'Failed to leave room');
@@ -75,9 +71,6 @@ module.exports = (io, socket) => {
       if (userId) {
         await roomDb.removeUserFromRoom(userId);
         io.to(roomId).emit('user_left', { userId });
-        console.log(
-          `User ${userId} (${socket.id}) disconnected and removed from room`
-        );
       }
     } catch (error) {
       console.error('Error handling user disconnect:', error.message);

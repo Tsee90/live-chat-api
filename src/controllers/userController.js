@@ -15,7 +15,6 @@ module.exports.createUser = [
     }
 
     try {
-      console.log('creating user...');
       req.body.password = await bcrypt.hash(req.body.password, 10);
       const verificationCode = Math.floor(
         100000 + Math.random() * 900000
@@ -24,7 +23,8 @@ module.exports.createUser = [
       if (newUser) {
         await sendVerificationEmail(req.body.email, verificationCode);
       }
-      res.status(201).json(newUser);
+      const { username, email } = newUser;
+      res.status(201).json({ username, email });
     } catch (error) {
       res.status(400).json(error);
     }
@@ -69,7 +69,6 @@ module.exports.getAllUsers = async (req, res) => {
 };
 
 module.exports.login = async (req, res, next) => {
-  console.log('logging in...');
   passportLocal.authenticate('local', { session: false }, (err, user, info) => {
     if (err || !user) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -94,10 +93,15 @@ module.exports.verifyEmail = async (req, res) => {
   const { email, code } = req.body;
   try {
     const user = await db.getUserByEmail(email);
-    console.log(user);
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    if (user.emailVerified) {
+      return res.status(400).json({ message: 'User already verified' });
+    }
+
     if (user.verificationCode !== code) {
       return res.status(400).json({ message: 'Invalid verification code' });
     }
@@ -110,11 +114,32 @@ module.exports.verifyEmail = async (req, res) => {
   }
 };
 
+module.exports.resendEmailVerification = async (req, res) => {
+  const { email } = req.body;
+  const user = await db.getUserByEmail(email);
+
+  if (!user.emailVerified) {
+    try {
+      const verificationCode = Math.floor(
+        100000 + Math.random() * 900000
+      ).toString();
+      const updatedUser = await db.updateUser({ ...user, verificationCode });
+      if (updatedUser) {
+        await sendVerificationEmail(req.body.email, verificationCode);
+      }
+      res.status(200).json('Verification resent');
+    } catch (error) {
+      res.status(400).json('Something has gone wrong');
+    }
+  } else {
+    return res.status(400).json({ message: 'User already verified' });
+  }
+};
+
 module.exports.createUserByAdmin = async (req, res) => {
   const { username, email } = req.body;
   const password = await bcrypt.hash('123', 10);
   try {
-    console.log(username, email, password);
     const user = await db.createUser({
       username,
       email,

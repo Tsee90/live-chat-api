@@ -36,7 +36,6 @@ module.exports.createRoom = async function ({
       RETURNING id, name, "userId", "startsAt", "expiresAt", active, ST_AsText(location) AS location;
     `;
   } catch (error) {
-    console.log(error);
     throw new Error(`Failed to create room: ${error.message}`);
   }
 };

@@ -52,7 +52,6 @@ module.exports.getUserByName = async function (username) {
       include: { croom: true, messages: true },
     });
   } catch (error) {
-    console.log('throwing error', error);
     throw new Error(`Failed to find user ${error.message}`);
   }
 };
@@ -65,25 +64,34 @@ module.exports.getUserByEmail = async function (email) {
       include: { croom: true, messages: true },
     });
   } catch (error) {
-    console.log('throwing error', error);
     throw new Error(`Failed to find user ${error.message}`);
   }
 };
 
 module.exports.updateUser = async function ({
-  userId,
+  id,
   username,
   email,
   password,
   role,
   banned,
+  emailVerified,
+  verificationCode,
 }) {
-  if (!userId) throw new Error('User ID is required');
+  if (!id) throw new Error('User ID is required');
 
   try {
     return await prisma.user.update({
-      where: { id: userId },
-      data: { username, email, password, role, banned },
+      where: { id },
+      data: {
+        username,
+        email,
+        password,
+        role,
+        banned,
+        emailVerified,
+        verificationCode,
+      },
     });
   } catch (error) {
     throw new Error(`Failed to update user: ${error.message}`);

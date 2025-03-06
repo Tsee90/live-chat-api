@@ -7,7 +7,6 @@ module.exports.createMessage = async function ({
   roomId,
   createdAt = new Date().toISOString(),
 }) {
-  console.log(content, senderId, roomId, createdAt);
   if (!content || !senderId || !roomId) {
     throw new Error('Content, sender ID, and room ID are required');
   }

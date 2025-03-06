@@ -13,12 +13,11 @@ const sendVerificationEmail = async (to, code) => {
     from: process.env.EMAIL_USER,
     to,
     subject: 'Your Verification Code',
-    text: `Your verification code is: ${code}`,
+    text: `Your Chizmiz.live verification code is: ${code}`,
   };
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('Verification email sent');
   } catch (error) {
     console.error('Error sending email:', error);
   }

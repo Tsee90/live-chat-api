@@ -73,7 +73,6 @@ module.exports.getRooms = async (req, res) => {
     }
     res.json(rooms);
   } catch (error) {
-    console.log(error);
     res.status(400).json({ error: error.message });
   }
 };
