@@ -11,7 +11,7 @@ router.post(
   '/resend-email-verification',
   userController.resendEmailVerification
 );
-router.post('/create-admin', userController.createUserByAdmin);
+//router.post('/create-admin', userController.createUserByAdmin);
 
 router.get('/:id', passportJWT, userController.getUserById);
 router.put('/:id', passportJWT, userController.updateUser);

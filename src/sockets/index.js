@@ -1,5 +1,6 @@
 const chatSocket = require('./chatSocket');
 const passport = require('../config/passport-jwt');
+const roomDb = require('../queries/roomQueries');
 
 const activeUsers = new Map();
 
