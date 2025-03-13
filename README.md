@@ -1,7 +1,7 @@
 Final assignment for The Odin Project
 Coded by Theo See
 
-This is an API for a live chat app. See it in action at chizmiz.live,
+This is an API for a live chat app. See it in action at https://chizmiz.live
 
 DOCUMENTATION
 
