@@ -15,7 +15,7 @@ router.post('/create-admin', userController.createUserByAdmin);
 
 router.get('/:id', passportJWT, userController.getUserById);
 router.put('/:id', passportJWT, userController.updateUser);
-router.delete('/:id', passportJWT, userController.deleteUser);
-router.get('/', passportJWT, userController.getAllUsers);
+//router.delete('/:id', passportJWT, userController.deleteUser);
+//router.get('/', passportJWT, userController.getAllUsers);
 
 module.exports = router;

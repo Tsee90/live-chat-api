@@ -64,16 +64,4 @@ module.exports = (io, socket) => {
       socket.emit('error', 'Failed to leave room');
     }
   });
-
-  socket.on('disconnect', async () => {
-    const roomId = socket.roomId;
-    try {
-      if (userId) {
-        await roomDb.removeUserFromRoom(userId);
-        io.to(roomId).emit('user_left', { userId });
-      }
-    } catch (error) {
-      console.error('Error handling user disconnect:', error.message);
-    }
-  });
 };

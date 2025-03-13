@@ -29,9 +29,18 @@ module.exports = (io) => {
 
     chatSocket(io, socket);
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', async () => {
       if (activeUsers.get(userId)?.socketId === socket.id) {
         activeUsers.delete(userId);
+      }
+      const roomId = socket.roomId;
+      try {
+        if (userId) {
+          await roomDb.removeUserFromRoom(userId);
+          io.to(roomId).emit('user_left', { userId });
+        }
+      } catch (error) {
+        console.error('Error handling user disconnect:', error.message);
       }
     });
   });

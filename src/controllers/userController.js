@@ -136,7 +136,7 @@ module.exports.resendEmailVerification = async (req, res) => {
   }
 };
 
-module.exports.createUserByAdmin = async (req, res) => {
+/* module.exports.createUserByAdmin = async (req, res) => {
   const { username, email } = req.body;
   const password = await bcrypt.hash('123', 10);
   try {
@@ -150,4 +150,4 @@ module.exports.createUserByAdmin = async (req, res) => {
   } catch (error) {
     res.status(400).json(error);
   }
-};
+}; */

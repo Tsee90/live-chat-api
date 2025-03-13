@@ -8,6 +8,6 @@ router.post('/', passportJWT, messageController.createMessage);
 router.get('/', passportJWT, messageController.getMessagesByRoom);
 
 router.get('/:messageId', passportJWT, messageController.getMessageById);
-router.delete('/:messageId', passportJWT, messageController.deleteMessage);
+//router.delete('/:messageId', passportJWT, messageController.deleteMessage);
 
 module.exports = router;

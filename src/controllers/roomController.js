@@ -14,7 +14,6 @@ module.exports.createRoom = async (req, res) => {
       longitude,
       startsAt,
       expiresAt,
-      active,
     };
     const newRoom = await db.createRoom(roomData);
     res.status(201).json(newRoom[0]);
