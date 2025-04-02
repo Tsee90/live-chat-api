@@ -32,7 +32,7 @@ module.exports.createUser = [
 ];
 
 module.exports.createGuest = async (req, res) => {
-  /*   const generateGuestName = () => {
+  const generateGuestName = () => {
     return (
       'Guest-' +
       BigInt(crypto.getRandomValues(new Uint32Array(1))[0])
@@ -40,18 +40,8 @@ module.exports.createGuest = async (req, res) => {
         .slice(0, 6)
     );
   };
-  let username;
-  let validName = false;
 
-  while (!validName) {
-    username = generateGuestName();
-    const existingUser = await db.getUserByName(username);
-
-    if (!existingUser) {
-      validName = true;
-    }
-  }
-
+  let username = generateGuestName();
   const password = BigInt(crypto.getRandomValues(new Uint32Array(1))[0])
     .toString(36)
     .slice(0, 8);
@@ -79,8 +69,7 @@ module.exports.createGuest = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: 'Something went wrong' });
-  } */
-  return res.status(200).json({ message: 'success!' });
+  }
 };
 
 module.exports.getUserById = async (req, res) => {
