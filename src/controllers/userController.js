@@ -33,18 +33,21 @@ module.exports.createUser = [
 
 module.exports.createGuest = async (req, res) => {
   const generateGuestName = () => {
-    return (
-      'Guest-' +
-      BigInt(crypto.getRandomValues(new Uint32Array(1))[0])
-        .toString(36)
-        .slice(0, 6)
-    );
+    const randomValue = Math.floor(Math.random() * 1e8); // Generate a random number (e.g., up to 100 million)
+    return `Guest-${randomValue.toString(36).slice(0, 6)}`; // Convert to base-36 and slice for shorter length
   };
+  let username;
+  let validName = false;
 
-  let username = generateGuestName();
-  const password = BigInt(crypto.getRandomValues(new Uint32Array(1))[0])
-    .toString(36)
-    .slice(0, 8);
+  while (!validName) {
+    username = generateGuestName();
+    const existingUser = await db.getUserByName(username);
+
+    if (!existingUser) {
+      validName = true;
+    }
+  }
+  const password = (Math.floor(Math.random() * 90000000) + 10000000).toString();
 
   const email = username + '@chizmiz.live';
   const role = 'guest';
