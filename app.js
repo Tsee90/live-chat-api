@@ -17,7 +17,7 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 socketHandlers(io);
 
-app.use(cors({ origin: 'https://chizmiz.live' }));
+app.use(cors({ origin: ['https://chizmiz.live', 'http://localhost:5173'] }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

@@ -31,6 +31,57 @@ module.exports.createUser = [
   },
 ];
 
+module.exports.createGuest = async (req, res) => {
+  const generateGuestName = () => {
+    return (
+      'Guest-' +
+      BigInt(crypto.getRandomValues(new Uint32Array(1))[0])
+        .toString(36)
+        .slice(0, 6)
+    );
+  };
+  let username;
+  let validName = false;
+
+  while (!validName) {
+    username = generateGuestName();
+    const existingUser = await db.getUserByName(username);
+
+    if (!existingUser) {
+      validName = true;
+    }
+  }
+
+  const password = BigInt(crypto.getRandomValues(new Uint32Array(1))[0])
+    .toString(36)
+    .slice(0, 8);
+
+  const email = username + '@chizmiz.live';
+  const role = 'guest';
+  const emailVerified = true;
+
+  try {
+    const user = await db.createUser({
+      username,
+      password,
+      email,
+      role,
+      emailVerified,
+    });
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: '12h',
+      }
+    );
+    return res.json({ token, user });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: 'Something went wrong' });
+  }
+};
+
 module.exports.getUserById = async (req, res) => {
   try {
     const foundUser = await db.getUserById(req.params.id);
@@ -51,6 +102,8 @@ module.exports.updateUser = async (req, res) => {
 };
 
 module.exports.deleteUser = async (req, res) => {
+  if (req.user.id !== req.params.id)
+    res.status(400).json({ error: 'Unauthorized deletion' });
   try {
     await db.deleteUser(req.params.id);
     res.json({ message: 'User deleted successfully' });
@@ -79,7 +132,7 @@ module.exports.login = async (req, res, next) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username },
+      { id: user.id, username: user.username, role: user.role },
       process.env.JWT_SECRET,
       {
         expiresIn: '12h',
