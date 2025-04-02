@@ -12,7 +12,7 @@ router.post(
   '/resend-email-verification',
   userController.resendEmailVerification
 );
-router.post('/guest', cors(), userController.createGuest);
+router.post('/guest', userController.createGuest);
 //router.post('/create-admin', userController.createUserByAdmin);
 
 router.get('/:id', passportJWT, userController.getUserById);

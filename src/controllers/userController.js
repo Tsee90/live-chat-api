@@ -68,14 +68,14 @@ module.exports.createGuest = async (req, res) => {
       role,
       emailVerified,
     });
-    const token = jwt.sign(
+    /*  const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
       process.env.JWT_SECRET,
       {
         expiresIn: '12h',
       }
-    );
-    return res.json({ token, user });
+    ); */
+    return res.json({ user });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: 'Something went wrong' });
