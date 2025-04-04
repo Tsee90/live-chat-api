@@ -15,22 +15,29 @@ module.exports.createUser = [
     }
 
     try {
-      req.body.password = await bcrypt.hash(req.body.password, 10);
+      const { username, email, password } = req.body;
+      if (!username || !email || !password)
+        return res.status(400).json('Missing input fields');
+      const encryptedPassword = await bcrypt.hash(password, 10);
       const verificationCode = Math.floor(
         100000 + Math.random() * 900000
       ).toString();
-      const newUser = await db.createUser({ ...req.body, verificationCode });
-      if (newUser) {
-        await sendVerificationEmail({
-          type: 'email',
-          to: req.body.email,
-          code: verificationCode,
-        });
-      }
-      const { username, email } = newUser;
+      await db.createUser({
+        username,
+        email,
+        password: encryptedPassword,
+        verificationCode,
+      });
+      await sendVerificationEmail({
+        type: 'email',
+        to: email,
+        code: verificationCode,
+      });
+
       res.status(201).json({ username, email });
     } catch (error) {
-      res.status(400).json(error);
+      console.log(error);
+      res.status(500).json({ message: 'An unexpected error occured' });
     }
   },
 ];
@@ -72,106 +79,118 @@ module.exports.createGuest = async (req, res) => {
         expiresIn: '12h',
       }
     );
-    return res.json({ token, user });
+    return res.status(201).json({ token });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ error: 'Something went wrong' });
+    return res.status(500).json({ error: 'An unexpected error occured' });
   }
 };
 
 module.exports.passwordResetRequest = async (req, res) => {
-  const { email } = req.body;
-
   try {
-    const user = await db.getUserByEmail(email);
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Missing email field' });
 
-    if (user) {
-      const resetCode = crypto.randomUUID();
-      user.resetCode = resetCode;
-      await db.updateUser(user);
-      await sendVerificationEmail({
-        type: 'password',
-        to: email,
-        code: resetCode,
-      });
-      return res.status(200).json({ message: 'Password reset request sent' });
-    } else {
-      return res.status(400).json({ message: 'Invalid email' });
-    }
+    const user = await db.getUserByEmail(email);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const resetCode = crypto.randomUUID();
+    user.resetCode = resetCode;
+    await db.updateUser(user);
+    await sendVerificationEmail({
+      type: 'password',
+      to: email,
+      code: resetCode,
+    });
+    return res.status(200).json({ message: 'Password reset request sent' });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: 'Oops. Something went wrong!' });
+    return res.status(500).json({ message: 'An unexpected error occured' });
   }
 };
 
 module.exports.passwordReset = async (req, res) => {
-  const { code } = req.params;
-  const { email, newPassword } = req.body;
-  const password = await bcrypt.hash(newPassword, 10);
-  const user = await db.getUserByEmail(email);
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
-  }
-
-  if (!user.resetCode) {
-    return res.status(400).json({ message: 'No reset request found' });
-  }
-
-  if (user.resetCode !== code) {
-    return res.status(400).json({ message: 'Invalid reset code' });
-  }
   try {
+    const { code } = req.params;
+    const { email, newPassword } = req.body;
+    if (!code) return res.status(401).json({ message: 'Unauthorized reset' });
+    if (!email || !newPassword)
+      return res.status(400).json({ message: 'Missing fields' });
+    const password = await bcrypt.hash(newPassword, 10);
+    const user = await db.getUserByEmail(email);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.resetCode) {
+      return res.status(400).json({ message: 'No reset request found' });
+    }
+
+    if (user.resetCode !== code) {
+      return res.status(401).json({ message: 'Unauthorized reset' });
+    }
     user.password = password;
     user.resetCode = null;
-    const updatedUser = await db.updateUser(user);
-    console.log(updatedUser);
-    return res.status(200).json({ message: 'Password updated' });
+    await db.updateUser(user);
+    return res.status(204);
   } catch (error) {
-    return res.status(500).json({ message: 'Something went wrong' });
+    console.log(error);
+    return res.status(500).json({ message: 'An unexpected error occured' });
   }
 };
 
 module.exports.getUsername = async (req, res) => {
-  const { email } = req.query;
-
   try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ message: 'Missing email field' });
+    }
     const user = await db.getUserByEmail(email);
 
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: 'Email not found' });
     sendVerificationEmail({ type: 'username', to: email, code: user.username });
     return res.status(200).json({ message: 'Username sent to email' });
   } catch (error) {
-    return res.status(500).json({ message: 'Something went wrong' });
+    console.log(error);
+    return res.status(500).json({ message: 'An unexpected error occured' });
   }
 };
 
 module.exports.getUserById = async (req, res) => {
   try {
-    const foundUser = await db.getUserById(req.params.id);
-    if (!foundUser) return res.status(404).json({ error: 'User not found' });
-    res.json(foundUser);
+    const user = await db.getUserById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.status(200).json(user);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.log(error);
+    res.status(500).json({ message: 'An unexpected error occured' });
   }
 };
 
 module.exports.updateUser = async (req, res) => {
   try {
-    const updatedUser = await db.updateUser(req.params.id, req.body);
-    res.json(updatedUser);
+    if (!req.params.id)
+      return res.status(400).json({ message: 'Missing param field: id' });
+    if (!req.body) return res.status(400).json({ message: 'Missing fields' });
+    await db.updateUser(req.params.id, req.body);
+    res.status(204);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.log(error);
+    res.status(500).json({ message: 'An unexpected error occured' });
   }
 };
 
 module.exports.deleteUser = async (req, res) => {
+  if (!req.params.id)
+    return res.status(400).json({ message: 'Missing param field: id' });
   if (req.user.id !== req.params.id)
     res.status(400).json({ error: 'Unauthorized deletion' });
   try {
     await db.deleteUser(req.params.id);
-    res.json({ message: 'User deleted successfully' });
+    res.status(204);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.log(error);
+    res.status(500).json({ message: 'An unexpected error occured' });
   }
 };
 
@@ -180,34 +199,42 @@ module.exports.getAllUsers = async (req, res) => {
     const users = await db.getAllUsers();
     res.json(users);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.log(error);
+    res.status(500).json({ message: 'An unexpected error occured' });
   }
 };
 
 module.exports.login = async (req, res, next) => {
   passportLocal.authenticate('local', { session: false }, (err, user, info) => {
-    if (err || !user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    if (!user.emailVerified) {
-      return res.status(401).json({ message: 'Email not verified' });
-    }
-
-    const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: '12h',
+    try {
+      if (err || !user) {
+        return res.status(401).json({ message: 'Invalid credentials' });
       }
-    );
-    return res.json({ token, user });
+
+      if (!user.emailVerified) {
+        return res.status(401).json({ message: 'Email not verified' });
+      }
+
+      const token = jwt.sign(
+        { id: user.id, username: user.username, role: user.role },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: '12h',
+        }
+      );
+      return res.status(200).json({ token });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: 'An unexpected error occured' });
+    }
   })(req, res, next);
 };
 
 module.exports.verifyEmail = async (req, res) => {
-  const { email, code } = req.body;
   try {
+    const { email, code } = req.body;
+    if (!email || !code)
+      return res.status(400).json({ message: 'Missing fields' });
     const user = await db.getUserByEmail(email);
 
     if (!user) {
@@ -215,44 +242,43 @@ module.exports.verifyEmail = async (req, res) => {
     }
 
     if (user.emailVerified) {
-      return res.status(400).json({ message: 'User already verified' });
+      return res.status(403).json({ message: 'User already verified' });
     }
 
     if (user.verificationCode !== code) {
-      return res.status(400).json({ message: 'Invalid verification code' });
+      return res.status(401).json({ message: 'Invalid verification code' });
     }
     const userId = user.id;
 
     await db.verifyUser(userId);
-    res.status(200).json({ message: 'Email verified successfully!' });
+    res.status(200).json({ message: 'Email verified successfully' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.log(error);
+    res.status(500).json({ message: 'An unexpected error occured' });
   }
 };
 
 module.exports.resendEmailVerification = async (req, res) => {
-  const { email } = req.body;
-  const user = await db.getUserByEmail(email);
-
-  if (!user.emailVerified) {
-    try {
-      const verificationCode = Math.floor(
-        100000 + Math.random() * 900000
-      ).toString();
-      const updatedUser = await db.updateUser({ ...user, verificationCode });
-      if (updatedUser) {
-        await sendVerificationEmail({
-          type: 'email',
-          to: req.body.email,
-          code: verificationCode,
-        });
-      }
-      res.status(200).json('Verification resent');
-    } catch (error) {
-      res.status(400).json('Something has gone wrong');
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Missing field' });
+    const user = await db.getUserByEmail(email);
+    if (!user) return res.status(404).json({ message: 'Email not found' });
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+    const updatedUser = await db.updateUser({ ...user, verificationCode });
+    if (updatedUser) {
+      await sendVerificationEmail({
+        type: 'email',
+        to: req.body.email,
+        code: verificationCode,
+      });
     }
-  } else {
-    return res.status(400).json({ message: 'User already verified' });
+    res.status(200).json({ message: 'Verification resent' });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json('An unexpected error occured');
   }
 };
 
