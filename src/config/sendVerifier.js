@@ -16,9 +16,11 @@ const sendVerificationEmail = async ({ type, to, code }) => {
 
   const subject =
     type === 'email'
-      ? 'Your Verification Code'
+      ? 'Chizmz.live: Your Verification Code'
       : type === 'password'
-      ? 'Reset your password'
+      ? 'Chizmiz.live: Reset your password'
+      : type === 'username'
+      ? 'Chizmiz.live: Your username'
       : null;
 
   const text =
@@ -26,6 +28,8 @@ const sendVerificationEmail = async ({ type, to, code }) => {
       ? `Your Chizmiz.live verification code is: ${code}`
       : type === 'password'
       ? `Password reset link: ${url}/${code}?email=${encodeURIComponent(to)}`
+      : type === 'username'
+      ? `Your username is: ${code}`
       : null;
 
   const mailOptions = {

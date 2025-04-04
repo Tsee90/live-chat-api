@@ -15,6 +15,7 @@ router.post(
 router.post('/guest', userController.createGuest);
 router.post('/password-reset/', userController.passwordResetRequest);
 router.post('/password-reset/:code', userController.passwordReset);
+router.get('/username', userController.getUsername);
 //router.post('/create-admin', userController.createUserByAdmin);
 
 router.get('/:id', passportJWT, userController.getUserById);

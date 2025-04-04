@@ -131,6 +131,20 @@ module.exports.passwordReset = async (req, res) => {
   }
 };
 
+module.exports.getUsername = async (req, res) => {
+  const { email } = req.query;
+
+  try {
+    const user = await db.getUserByEmail(email);
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    sendVerificationEmail({ type: 'username', to: email, code: user.username });
+    return res.status(200).json({ message: 'Username sent to email' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Something went wrong' });
+  }
+};
+
 module.exports.getUserById = async (req, res) => {
   try {
     const foundUser = await db.getUserById(req.params.id);
