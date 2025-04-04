@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { validateUser } = require('../config/validators');
 const { validationResult } = require('express-validator');
-const { sendVerificationEmail } = require('../config/verifyEmail');
+const { sendVerificationEmail } = require('../config/sendVerifier');
 
 module.exports.createUser = [
   validateUser,
@@ -21,7 +21,11 @@ module.exports.createUser = [
       ).toString();
       const newUser = await db.createUser({ ...req.body, verificationCode });
       if (newUser) {
-        await sendVerificationEmail(req.body.email, verificationCode);
+        await sendVerificationEmail({
+          type: 'email',
+          to: req.body.email,
+          code: verificationCode,
+        });
       }
       const { username, email } = newUser;
       res.status(201).json({ username, email });
@@ -72,6 +76,58 @@ module.exports.createGuest = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: 'Something went wrong' });
+  }
+};
+
+module.exports.passwordResetRequest = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await db.getUserByEmail(email);
+
+    if (user) {
+      const resetCode = crypto.randomUUID();
+      user.resetCode = resetCode;
+      await db.updateUser(user);
+      await sendVerificationEmail({
+        type: 'password',
+        to: email,
+        code: resetCode,
+      });
+      return res.status(200).json({ message: 'Password reset request sent' });
+    } else {
+      return res.status(400).json({ message: 'Invalid email' });
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: 'Oops. Something went wrong!' });
+  }
+};
+
+module.exports.passwordReset = async (req, res) => {
+  const { code } = req.params;
+  const { email, newPassword } = req.body;
+  const password = await bcrypt.hash(newPassword, 10);
+  const user = await db.getUserByEmail(email);
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  if (!user.resetCode) {
+    return res.status(400).json({ message: 'No reset request found' });
+  }
+
+  if (user.resetCode !== code) {
+    return res.status(400).json({ message: 'Invalid reset code' });
+  }
+  try {
+    user.password = password;
+    user.resetCode = null;
+    const updatedUser = await db.updateUser(user);
+    console.log(updatedUser);
+    return res.status(200).json({ message: 'Password updated' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Something went wrong' });
   }
 };
 
@@ -171,7 +227,11 @@ module.exports.resendEmailVerification = async (req, res) => {
       ).toString();
       const updatedUser = await db.updateUser({ ...user, verificationCode });
       if (updatedUser) {
-        await sendVerificationEmail(req.body.email, verificationCode);
+        await sendVerificationEmail({
+          type: 'email',
+          to: req.body.email,
+          code: verificationCode,
+        });
       }
       res.status(200).json('Verification resent');
     } catch (error) {

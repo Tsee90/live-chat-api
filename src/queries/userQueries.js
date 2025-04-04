@@ -77,6 +77,7 @@ module.exports.updateUser = async function ({
   banned,
   emailVerified,
   verificationCode,
+  resetCode,
 }) {
   if (!id) throw new Error('User ID is required');
 
@@ -91,6 +92,7 @@ module.exports.updateUser = async function ({
         banned,
         emailVerified,
         verificationCode,
+        resetCode,
       },
     });
   } catch (error) {

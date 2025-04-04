@@ -19,7 +19,8 @@ model User {
   roomId   String?  
   room     Room?    @relation("UserRoom", fields: [roomId], references: [id])
   emailVerified    Boolean  @default(false)
-  verificationCode String? 
+  verificationCode String?
+  resetCode String? 
 }
 
 model Message {

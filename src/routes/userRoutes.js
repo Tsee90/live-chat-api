@@ -13,6 +13,8 @@ router.post(
   userController.resendEmailVerification
 );
 router.post('/guest', userController.createGuest);
+router.post('/password-reset/', userController.passwordResetRequest);
+router.post('/password-reset/:code', userController.passwordReset);
 //router.post('/create-admin', userController.createUserByAdmin);
 
 router.get('/:id', passportJWT, userController.getUserById);
