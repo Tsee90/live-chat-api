@@ -47,12 +47,20 @@ module.exports.getUserById = async function (userId) {
 module.exports.getUserByName = async function (username) {
   if (!username) throw new Error('Username is required');
   try {
-    return await prisma.user.findUnique({
-      where: { username },
-      include: { croom: true, messages: true },
+    return await prisma.user.findFirst({
+      where: {
+        username: {
+          equals: username,
+          mode: 'insensitive',
+        },
+      },
+      include: {
+        croom: true,
+        messages: true,
+      },
     });
   } catch (error) {
-    throw new Error(`Failed to find user ${error.message}`);
+    throw new Error(`Failed to find user: ${error.message}`);
   }
 };
 

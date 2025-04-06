@@ -8,6 +8,10 @@ const validateUser = [
     .withMessage('Username is required')
     .isLength({ min: 3, max: 15 })
     .withMessage('Username must be between 3 and 15 characters')
+    .matches(/^(?!.*[_.-]{2})[A-Za-z0-9][A-Za-z0-9_.-]*[A-Za-z0-9]$/)
+    .withMessage(
+      'Username can only contain letters, numbers, underscores (_), hyphens (-), and periods (.), and cannot start or end with a special character or have duplicates.'
+    )
     .custom(async (username) => {
       const existingUser = await db.getUserByName(username);
       if (existingUser) {
