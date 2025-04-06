@@ -3,7 +3,6 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const passport = require('../config/passport-jwt');
 const passportJWT = passport.authenticate('jwt', { session: false });
-const cors = require('cors');
 
 router.post('/signup', userController.createUser);
 router.post('/login', userController.login);

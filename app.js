@@ -23,9 +23,11 @@ app.use(express.urlencoded({ extended: true }));
 
 const userRoutes = require('./src/routes/userRoutes');
 const roomRoutes = require('./src/routes/roomRoutes');
+const friendshipRoutes = require('./src/routes/friendshipRoutes');
 
 app.use('/users', userRoutes);
 app.use('/rooms', roomRoutes);
+app.use('/friends', friendshipRoutes);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

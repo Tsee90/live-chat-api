@@ -132,7 +132,7 @@ module.exports.passwordReset = async (req, res) => {
     user.password = password;
     user.resetCode = null;
     await db.updateUser(user);
-    return res.status(204);
+    return res.status(204).json({ message: 'Password updated' });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'An unexpected error occured' });
@@ -173,7 +173,7 @@ module.exports.updateUser = async (req, res) => {
       return res.status(400).json({ message: 'Missing param field: id' });
     if (!req.body) return res.status(400).json({ message: 'Missing fields' });
     await db.updateUser(req.params.id, req.body);
-    res.status(204);
+    res.status(204).json({ message: 'User updated' });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'An unexpected error occured' });
@@ -186,8 +186,8 @@ module.exports.deleteUser = async (req, res) => {
   if (req.user.id !== req.params.id)
     res.status(400).json({ error: 'Unauthorized deletion' });
   try {
-    await db.deleteUser(req.params.id);
-    res.status(204);
+    const deletedUser = await db.deleteUser(req.params.id);
+    res.status(204).json({ message: 'User deleted' });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'An unexpected error occured' });
