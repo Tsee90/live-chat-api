@@ -18,6 +18,11 @@ router.get('/username', userController.getUsername);
 //router.post('/create-admin', userController.createUserByAdmin);
 
 router.get('/:id', passportJWT, userController.getUserById);
+router.get(
+  '/username/:username',
+  passportJWT,
+  userController.getUserByUsername
+);
 router.put('/:id', passportJWT, userController.updateUser);
 router.delete('/:id', passportJWT, userController.deleteUser);
 //router.get('/', passportJWT, userController.getAllUsers);

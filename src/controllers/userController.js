@@ -73,7 +73,12 @@ module.exports.createGuest = async (req, res) => {
       emailVerified,
     });
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
+      {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        email: user.email,
+      },
       process.env.JWT_SECRET,
       {
         expiresIn: '12h',
@@ -88,7 +93,7 @@ module.exports.createGuest = async (req, res) => {
 
 module.exports.passwordResetRequest = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, token } = req.body;
     if (!email) return res.status(400).json({ message: 'Missing email field' });
 
     const user = await db.getUserByEmail(email);
@@ -97,6 +102,7 @@ module.exports.passwordResetRequest = async (req, res) => {
     const resetCode = crypto.randomUUID();
     user.resetCode = resetCode;
     await db.updateUser(user);
+    if (token) return res.status(200).json({ resetCode });
     await sendVerificationEmail({
       type: 'password',
       to: email,
@@ -167,6 +173,19 @@ module.exports.getUserById = async (req, res) => {
   }
 };
 
+module.exports.getUserByUsername = async (req, res) => {
+  try {
+    const { username } = req.params;
+    if (!username)
+      return res.status(400).json({ message: 'Missing username field' });
+    const user = await db.getUserByName(username);
+    res.status(200).json({ user });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'An unexpected error occurred' });
+  }
+};
+
 module.exports.updateUser = async (req, res) => {
   try {
     if (!req.params.id)
@@ -216,7 +235,12 @@ module.exports.login = async (req, res, next) => {
       }
 
       const token = jwt.sign(
-        { id: user.id, username: user.username, role: user.role },
+        {
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          email: user.email,
+        },
         process.env.JWT_SECRET,
         {
           expiresIn: '12h',

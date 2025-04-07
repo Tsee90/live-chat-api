@@ -33,8 +33,8 @@ model Friendship {
   status     FriendRequestStatus @default(PENDING)
   createdAt  DateTime @default(now())
 
-  sender   User @relation("SentFriendRequests", fields: [senderId], references: [id])
-  receiver User @relation("ReceivedFriendRequests", fields: [receiverId], references: [id])
+  sender   User @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
 }
 
 enum FriendRequestStatus {
@@ -49,7 +49,7 @@ model Message {
   createdAt DateTime @default(now())
 
   senderId String  
-  sender   User @relation(fields: [senderId], references: [id])
+  sender   User @relation(fields: [senderId], references: [id], onDelete: Cascade)
   
   roomId   String  
   room     Room @relation(fields: [roomId], references: [id])
@@ -64,7 +64,7 @@ model Room {
   active    Boolean  @default(false) 
 
   messages  Message[]
-  creator   User     @relation(fields: [userId], references: [id])
+  creator   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   location  Unsupported("geometry(Point, 4326)")
   users     User[]   @relation("UserRoom")
