@@ -149,6 +149,29 @@ module.exports.getPendingFriendRequests = async function (userId) {
   }
 };
 
+module.exports.areUsersPending = async function ({ userId1, userId2 }) {
+  if (!userId1 || !userId2) throw new Error('User ID is required');
+
+  try {
+    return await prisma.friendship.findFirst({
+      where: {
+        OR: [
+          { senderId: userId1, receiverId: userId2, status: 'PENDING' },
+          { receiverId: userId2, receiverId: userId1, status: 'PENDING' },
+        ],
+      },
+      include: {
+        sender: true,
+        receiver: true,
+      },
+    });
+  } catch (error) {
+    throw new Error(
+      `Failed to retrieve pending friend requests: ${error.message}`
+    );
+  }
+};
+
 module.exports.unfriendUser = async function ({ userId1, userId2 }) {
   if (!userId1 || !userId2) throw new Error('Both user IDs are required');
 

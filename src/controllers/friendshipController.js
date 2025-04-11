@@ -136,6 +136,23 @@ module.exports.getPendingFriendRequests = async (req, res) => {
   }
 };
 
+module.exports.areUsersPending = async (req, res) => {
+  try {
+    const userId1 = req.user.id;
+    const { userId2 } = req.params;
+
+    if (!userId2) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    const arePending = await db.areUsersPending({ userId1, userId2 });
+    return res.status(200).json({ arePending });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'An unexpected error occurred' });
+  }
+};
+
 module.exports.getFriendRequest = async (req, res) => {
   try {
     const userId1 = req.user.id; // Use the authenticated user's ID
@@ -150,8 +167,8 @@ module.exports.getFriendRequest = async (req, res) => {
     return res.status(200).json({ message: 'Request found' });
   } catch (error) {
     console.log(error);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
-  res.status(500).json({ message: 'An unexpected error occurred' });
 };
 
 module.exports.areUsersFriends = async (req, res) => {

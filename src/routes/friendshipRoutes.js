@@ -42,4 +42,10 @@ router.get(
   friendshipController.areUsersFriends
 );
 
+router.get(
+  '/is-pending/:userId2',
+  passportJWT,
+  friendshipController.areUsersPending
+);
+
 module.exports = router;
