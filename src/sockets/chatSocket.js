@@ -1,5 +1,6 @@
 const db = require('../queries/messageQueries');
 const roomDb = require('../queries/roomQueries');
+const { updateFriends } = require('./socketFunctions');
 
 module.exports = (io, socket) => {
   const username = socket.user.username;
@@ -24,6 +25,7 @@ module.exports = (io, socket) => {
       socket.join(roomId);
 
       io.to(roomId).emit('joined_room', { user: socket.user });
+      updateFriends({ userId, io });
     } catch (error) {
       socket.emit('error', 'Failed to join room');
     }
@@ -60,6 +62,7 @@ module.exports = (io, socket) => {
       await roomDb.removeUserFromRoom(userId);
 
       io.to(roomId).emit('user_left', { userId });
+      updateFriends({ userId, io });
     } catch (error) {
       socket.emit('error', 'Failed to leave room');
     }

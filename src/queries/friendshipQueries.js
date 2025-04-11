@@ -1,17 +1,19 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-module.exports.getFriendRequest = async ({ senderId, receiverId }) => {
+module.exports.getFriendRequest = async ({ userId1, userId2 }) => {
   try {
     const friendRequest = await prisma.friendship.findFirst({
       where: {
-        senderId,
-        receiverId,
+        OR: [
+          { senderId: userId1, receiverId: userId2 },
+          { senderId: userId2, receiverId: userId1 },
+        ],
       },
     });
 
     if (!friendRequest) {
-      throw new Error('Friend request not found');
+      return null;
     }
 
     return friendRequest;
@@ -215,5 +217,29 @@ module.exports.areUsersFriends = async function ({ userId1, userId2 }) {
     return friendship !== null;
   } catch (error) {
     throw new Error(`Failed to check friendship: ${error.message}`);
+  }
+};
+
+module.exports.deleteFriendship = async function ({ userId, friendId }) {
+  try {
+    const deletedRequest = await prisma.friendship.deleteMany({
+      where: {
+        OR: [
+          { senderId: userId, receiverId: friendId },
+          { senderId: friendId, receiverId: userId },
+        ],
+      },
+    });
+
+    if (deletedRequest.count === 0) {
+      throw new Error('Friendship not found or already deleted');
+    }
+
+    return { message: 'Friendship deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting friendship:', error);
+    throw new Error(
+      'An unexpected error occurred while deleting the friendship'
+    );
   }
 };

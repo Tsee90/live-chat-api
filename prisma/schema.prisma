@@ -17,11 +17,11 @@ model User {
   croom    Room[] 
   messages Message[] 
   roomId   String?  
-  room     Room?    @relation("UserRoom", fields: [roomId], references: [id])
+  room     Room?    @relation("UserRoom", fields: [roomId], references: [id], onDelete: Cascade)
   emailVerified    Boolean  @default(false)
   verificationCode String?
   resetCode String? 
-
+  online    Boolean @default(false)
   sentFriendRequests     Friendship[] @relation("SentFriendRequests")
   receivedFriendRequests Friendship[] @relation("ReceivedFriendRequests")
 }
@@ -52,7 +52,7 @@ model Message {
   sender   User @relation(fields: [senderId], references: [id], onDelete: Cascade)
   
   roomId   String  
-  room     Room @relation(fields: [roomId], references: [id])
+  room     Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
 }
 
 model Room {

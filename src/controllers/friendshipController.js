@@ -24,7 +24,10 @@ module.exports.createFriendRequest = async (req, res) => {
     }
 
     // Check if the request already exists
-    const existingRequest = await db.getFriendRequest({ senderId, receiverId });
+    const existingRequest = await db.getFriendRequest({
+      userId1: senderId,
+      userId2: receiverId,
+    });
     if (existingRequest) {
       return res.status(400).json({ message: 'Friend request already sent' });
     }
@@ -83,7 +86,7 @@ module.exports.cancelFriendRequest = async (req, res) => {
     }
 
     // Cancel the request
-    await db.cancelFriendRequest(senderId, receiverId);
+    await db.cancelFriendRequest({ senderId, receiverId });
     res.status(200).json({ message: 'Friend request canceled' });
   } catch (error) {
     console.log(error);
@@ -133,6 +136,24 @@ module.exports.getPendingFriendRequests = async (req, res) => {
   }
 };
 
+module.exports.getFriendRequest = async (req, res) => {
+  try {
+    const userId1 = req.user.id; // Use the authenticated user's ID
+    const { userId2 } = req.params;
+
+    if (!userId1 || !userId2)
+      return res.status(400).json({ message: 'Missing Fields' });
+
+    const existingRequest = await db.getFriendRequest({ userId1, userId2 });
+    if (!existingRequest)
+      return res.status(204).json({ message: 'No request found' });
+    return res.status(200).json({ message: 'Request found' });
+  } catch (error) {
+    console.log(error);
+  }
+  res.status(500).json({ message: 'An unexpected error occurred' });
+};
+
 module.exports.areUsersFriends = async (req, res) => {
   try {
     const userId1 = req.user.id; // Use the authenticated user's ID
@@ -168,6 +189,22 @@ module.exports.getReceivedFriendRequests = async (req, res) => {
 
     const requests = await db.getReceivedFriendRequests(userId);
     res.status(200).json(requests);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'An unexpected error occurred' });
+  }
+};
+
+module.exports.deleteFriendship = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { friendId } = req.body;
+
+    if (!userId || !friendId)
+      return res.status(400).json({ message: 'Missing fields' });
+
+    await db.deleteFriendship({ userId, friendId });
+    res.status(200).json({ message: 'Friendship deleted' });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'An unexpected error occurred' });

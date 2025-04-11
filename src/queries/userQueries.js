@@ -142,3 +142,15 @@ module.exports.verifyUser = async function (userId) {
     throw new Error(`Failed to verify user: ${error.message}`);
   }
 };
+
+module.exports.userOnline = async function ({ userId, isOnline }) {
+  if (!userId) throw new Error('User ID is required');
+  try {
+    return await prisma.user.update({
+      where: { id: userId },
+      data: { online: isOnline },
+    });
+  } catch (error) {
+    throw new Error(`Failed to update user online: ${error.message}`);
+  }
+};

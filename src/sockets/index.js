@@ -1,10 +1,13 @@
 const chatSocket = require('./chatSocket');
 const passport = require('../config/passport-jwt');
 const roomDb = require('../queries/roomQueries');
+const userDb = require('../queries/userQueries');
 
-const activeUsers = new Map();
+const friendSocket = require('./friendSocket');
+const activeUsers = require('./activeUsers');
+const { updateFriends } = require('./socketFunctions');
 
-module.exports = (io) => {
+const socketServer = (io) => {
   io.use((socket, next) => {
     passport.authenticate('jwt', { session: false }, (err, user) => {
       if (err) return next(new Error(`Authentication error: ${err.message}`));
@@ -28,12 +31,31 @@ module.exports = (io) => {
 
     activeUsers.set(userId, { socketId: socket.id });
 
+    const setUserOnline = async () => {
+      try {
+        await userDb.userOnline({ userId, isOnline: true });
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    setUserOnline();
+    updateFriends({ userId, io });
     chatSocket(io, socket);
+    friendSocket(io, socket);
 
     socket.on('disconnect', async () => {
       if (activeUsers.get(userId)?.socketId === socket.id) {
         activeUsers.delete(userId);
       }
+      const setUserOffline = async () => {
+        try {
+          await userDb.userOnline({ userId, isOnline: false });
+        } catch (error) {
+          console.log(error);
+        }
+      };
+      setUserOffline();
+      updateFriends({ userId, io });
       const roomId = socket.roomId;
       try {
         if (userId) {
@@ -41,8 +63,10 @@ module.exports = (io) => {
           io.to(roomId).emit('user_left', { userId });
         }
       } catch (error) {
-        console.error('Error handling user disconnect:', error.message);
+        console.log('Error handling user disconnect:', error.message);
       }
     });
   });
 };
+
+module.exports = { socketServer };
