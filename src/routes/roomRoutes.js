@@ -11,7 +11,7 @@ router.post('/:roomId/leave', passportJWT, roomController.leaveRoom);
 router.get('/', passportJWT, roomController.getRooms);
 router.get('/:roomId', passportJWT, roomController.getRoomById);
 //router.put('/:roomId', passportJWT, roomController.updateRoom);
-//router.delete('/:roomId', passportJWT, roomController.deleteRoom);
+router.delete('/:roomId', passportJWT, roomController.deleteRoom);
 
 router.use('/:roomId/messages', messageRoutes);
 

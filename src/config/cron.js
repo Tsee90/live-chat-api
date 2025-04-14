@@ -3,12 +3,20 @@ const db = require('../queries/roomQueries');
 
 const scheduleRoomExpirationCheck = () => {
   cron.schedule('* * * * *', async () => {
-    const result = await db.updateExpiredRooms();
+    try {
+      const result = await db.updateExpiredRooms();
+    } catch (error) {
+      console.log(error);
+    }
   });
 };
 const scheduleEmptyRoomCleanup = () => {
-  cron.schedule('*/5 * * * *', async () => {
-    const result = await db.deleteEmptyRooms();
+  cron.schedule('* * * * *', async () => {
+    try {
+      const result = await db.deleteEmptyRooms();
+    } catch (error) {
+      console.log(error);
+    }
   });
 };
 

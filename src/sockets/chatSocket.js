@@ -26,6 +26,7 @@ module.exports = (io, socket) => {
 
       io.to(roomId).emit('joined_room', { user: socket.user });
       updateFriends({ userId, io });
+      const result = await db.updateExpiredRooms();
     } catch (error) {
       socket.emit('error', 'Failed to join room');
     }
