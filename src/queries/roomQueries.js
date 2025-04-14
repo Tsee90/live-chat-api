@@ -310,14 +310,12 @@ module.exports.updateExpiredRooms = async function () {
   }
 };
 
-module.exports.updateEmptyRooms = async function () {
+module.exports.deleteEmptyRooms = async function () {
   try {
-    await prisma.room.updateMany({
+    await prisma.room.deleteMany({
       where: {
         users: { none: {} },
-        active: true,
       },
-      data: { active: false },
     });
   } catch (error) {
     throw new Error(`Failed to deactivate empty rooms: ${error.message}`);
