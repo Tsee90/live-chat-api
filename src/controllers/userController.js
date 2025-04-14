@@ -79,10 +79,7 @@ module.exports.createGuest = async (req, res) => {
         role: user.role,
         email: user.email,
       },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: '12h',
-      }
+      process.env.JWT_SECRET
     );
     return res.status(201).json({ token });
   } catch (error) {
@@ -241,10 +238,7 @@ module.exports.login = async (req, res, next) => {
           role: user.role,
           email: user.email,
         },
-        process.env.JWT_SECRET,
-        {
-          expiresIn: '12h',
-        }
+        process.env.JWT_SECRET
       );
       return res.status(200).json({ token });
     } catch (error) {
