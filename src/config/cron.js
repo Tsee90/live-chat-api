@@ -11,7 +11,7 @@ const scheduleRoomExpirationCheck = () => {
   });
 };
 const scheduleEmptyRoomCleanup = () => {
-  cron.schedule('* * * * *', async () => {
+  cron.schedule('0 * * * *', async () => {
     try {
       const result = await db.deleteEmptyRooms();
     } catch (error) {
