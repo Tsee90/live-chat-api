@@ -100,11 +100,12 @@ module.exports.passwordResetRequest = async (req, res) => {
     user.resetCode = resetCode;
     await db.updateUser(user);
     if (token) return res.status(200).json({ resetCode });
-    await sendVerificationEmail({
+    sendVerificationEmail({
       type: 'password',
       to: email,
       code: resetCode,
     });
+
     return res.status(200).json({ message: 'Password reset request sent' });
   } catch (error) {
     console.log(error);
